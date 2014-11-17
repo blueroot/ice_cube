@@ -1,12 +1,12 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 
-describe IceCube::Schedule do
+describe IceCube::RecurrenceSchedule do
 
   include IceCube
 
   it 'yields itself for configuration' do
     t1 = Time.utc(2013, 2, 12, 12, 34 ,56)
-    schedule = IceCube::Schedule.new do |s|
+    schedule = IceCube::RecurrenceSchedule.new do |s|
       s.start_time = t1
     end
     schedule.start_time.should == t1
@@ -14,14 +14,14 @@ describe IceCube::Schedule do
 
   it 'initializes with a start_time' do
     t1 = Time.local(2013, 2, 14, 0, 32, 0)
-    schedule = IceCube::Schedule.new(t1)
+    schedule = IceCube::RecurrenceSchedule.new(t1)
     schedule.start_time.should be_a Time
     schedule.start_time.should == t1
   end
 
   it 'converts initialized DateTime to Time', expect_warnings: true do
     dt = DateTime.new(2013, 2, 14, 0, 32, 0)
-    schedule = IceCube::Schedule.new(dt)
+    schedule = IceCube::RecurrenceSchedule.new(dt)
     schedule.start_time.should be_a Time
     schedule.start_time.should == Time.local(dt.year, dt.month, dt.day, dt.hour, dt.min, dt.sec)
   end
@@ -29,12 +29,12 @@ describe IceCube::Schedule do
   describe :next_occurrence do
 
     it 'should not raise an exception when calling next occurrence with no remaining occurrences' do
-      schedule = IceCube::Schedule.new Time.now
+      schedule = IceCube::RecurrenceSchedule.new Time.now
       lambda { schedule.next_occurrence }.should_not raise_error
     end
 
     it "should not skip ahead a day when called with a date" do
-      schedule = IceCube::Schedule.new(Time.utc(2014, 1, 1, 12, 34, 56)) do |s|
+      schedule = IceCube::RecurrenceSchedule.new(Time.utc(2014, 1, 1, 12, 34, 56)) do |s|
         s.add_recurrence_rule IceCube::Rule.hourly
       end
       next_hour = schedule.next_occurrence(Date.new(2014, 1, 2))
@@ -47,7 +47,7 @@ describe IceCube::Schedule do
 
     it 'should be based on end_time' do
       start = Time.now
-      schedule = IceCube::Schedule.new(start)
+      schedule = IceCube::RecurrenceSchedule.new(start)
       schedule.duration.should == 0
       schedule.end_time = start + 3600
       schedule.duration.should == 3600
@@ -56,7 +56,7 @@ describe IceCube::Schedule do
     it 'should give precedence to :end_time option' do
       start = Time.now
       conflicting_options = {:end_time => start + 600, :duration => 1200}
-      schedule = IceCube::Schedule.new(start, conflicting_options)
+      schedule = IceCube::RecurrenceSchedule.new(start, conflicting_options)
       schedule.duration.should == 600
     end
 
@@ -65,7 +65,7 @@ describe IceCube::Schedule do
   describe :occurring_at? do
 
     it "should not capture multiple days when called with a date" do
-      schedule = IceCube::Schedule.new do |s|
+      schedule = IceCube::RecurrenceSchedule.new do |s|
         s.start_time = Time.utc(2013, 12, 31, 23, 59, 50)
         s.duration = 20
         s.add_recurrence_rule IceCube::Rule.daily(2)
@@ -79,17 +79,17 @@ describe IceCube::Schedule do
   describe :recurrence_times do
 
     it 'should start empty' do
-      IceCube::Schedule.new.recurrence_times.should be_empty
+      IceCube::RecurrenceSchedule.new.recurrence_times.should be_empty
     end
 
     it 'should include added times' do
-      schedule = IceCube::Schedule.new(t0 = Time.now)
+      schedule = IceCube::RecurrenceSchedule.new(t0 = Time.now)
       schedule.add_recurrence_time(t1 = t0 + 3600)
       schedule.recurrence_times.should == [t1]
     end
 
     it 'can include start time' do
-      schedule = IceCube::Schedule.new(t0 = Time.now)
+      schedule = IceCube::RecurrenceSchedule.new(t0 = Time.now)
       schedule.add_recurrence_time(t0)
       schedule.recurrence_times.should == [t0]
     end
@@ -100,7 +100,7 @@ describe IceCube::Schedule do
 
     it 'should raise an error if both are not terminating' do
       schedules = 2.times.map do
-        schedule = IceCube::Schedule.new(Time.now)
+        schedule = IceCube::RecurrenceSchedule.new(Time.now)
         schedule.rrule IceCube::Rule.daily
         schedule
       end
@@ -110,9 +110,9 @@ describe IceCube::Schedule do
     end
 
     it 'should not raise error if both are non-terminating closing time present' do
-      schedule1 = IceCube::Schedule.new Time.now
+      schedule1 = IceCube::RecurrenceSchedule.new Time.now
       schedule1.rrule IceCube::Rule.weekly
-      schedule2 = IceCube::Schedule.new Time.now
+      schedule2 = IceCube::RecurrenceSchedule.new Time.now
       schedule2.rrule IceCube::Rule.weekly
       lambda do
         schedule1.conflicts_with?(schedule2, Time.now + IceCube::ONE_DAY)
@@ -120,9 +120,9 @@ describe IceCube::Schedule do
     end
 
     it 'should not raise an error if one is non-terminating' do
-      schedule1 = IceCube::Schedule.new Time.now
+      schedule1 = IceCube::RecurrenceSchedule.new Time.now
       schedule1.rrule IceCube::Rule.weekly
-      schedule2 = IceCube::Schedule.new Time.now
+      schedule2 = IceCube::RecurrenceSchedule.new Time.now
       schedule2.rrule IceCube::Rule.weekly.until(Time.now)
       lambda do
         schedule1.conflicts_with?(schedule2)
@@ -130,9 +130,9 @@ describe IceCube::Schedule do
     end
 
     it 'should not raise an error if the other is non-terminating' do
-      schedule1 = IceCube::Schedule.new Time.now
+      schedule1 = IceCube::RecurrenceSchedule.new Time.now
       schedule1.rrule IceCube::Rule.weekly.until(Time.now)
-      schedule2 = IceCube::Schedule.new Time.now
+      schedule2 = IceCube::RecurrenceSchedule.new Time.now
       schedule2.rrule IceCube::Rule.weekly
       lambda do
         schedule1.conflicts_with?(schedule2)
@@ -141,9 +141,9 @@ describe IceCube::Schedule do
 
     it 'should return true if conflict is present' do
       start_time = Time.now
-      schedule1 = IceCube::Schedule.new(start_time)
+      schedule1 = IceCube::RecurrenceSchedule.new(start_time)
       schedule1.rrule IceCube::Rule.daily
-      schedule2 = IceCube::Schedule.new(start_time)
+      schedule2 = IceCube::RecurrenceSchedule.new(start_time)
       schedule2.rrule IceCube::Rule.daily
       conflict = schedule1.conflicts_with?(schedule2, start_time + IceCube::ONE_DAY)
       conflict.should be_true
@@ -151,9 +151,9 @@ describe IceCube::Schedule do
 
     it 'should return false if conflict is not present' do
       start_time = Time.now
-      schedule1 = IceCube::Schedule.new(start_time)
+      schedule1 = IceCube::RecurrenceSchedule.new(start_time)
       schedule1.rrule IceCube::Rule.weekly.day(:tuesday)
-      schedule2 = IceCube::Schedule.new(start_time)
+      schedule2 = IceCube::RecurrenceSchedule.new(start_time)
       schedule2.rrule IceCube::Rule.weekly.day(:monday)
       conflict = schedule1.conflicts_with?(schedule2, start_time + IceCube::ONE_DAY)
       conflict.should be_false
@@ -161,9 +161,9 @@ describe IceCube::Schedule do
 
     it 'should return true if conflict is present based on duration' do
       start_time = Time.now
-      schedule1 = IceCube::Schedule.new(start_time, :duration => IceCube::ONE_DAY + 1)
+      schedule1 = IceCube::RecurrenceSchedule.new(start_time, :duration => IceCube::ONE_DAY + 1)
       schedule1.rrule IceCube::Rule.weekly.day(:monday)
-      schedule2 = IceCube::Schedule.new(start_time)
+      schedule2 = IceCube::RecurrenceSchedule.new(start_time)
       schedule2.rrule IceCube::Rule.weekly.day(:tuesday)
       conflict = schedule1.conflicts_with?(schedule2, start_time + IceCube::ONE_WEEK)
       conflict.should be_true
@@ -171,9 +171,9 @@ describe IceCube::Schedule do
 
     it 'should return true if conflict is present based on duration - other way' do
       start_time = Time.now
-      schedule1 = IceCube::Schedule.new(start_time)
+      schedule1 = IceCube::RecurrenceSchedule.new(start_time)
       schedule1.rrule IceCube::Rule.weekly.day(:tuesday)
-      schedule2 = IceCube::Schedule.new(start_time, :duration => IceCube::ONE_DAY + 1)
+      schedule2 = IceCube::RecurrenceSchedule.new(start_time, :duration => IceCube::ONE_DAY + 1)
       schedule2.rrule IceCube::Rule.weekly.day(:monday)
       conflict = schedule1.conflicts_with?(schedule2, start_time + IceCube::ONE_WEEK)
       conflict.should be_true
@@ -181,9 +181,9 @@ describe IceCube::Schedule do
 
     it 'should return false if conflict is past closing_time' do
       start_time = Time.local(2011, 1, 1, 12) # Sunday
-      schedule1 = IceCube::Schedule.new(start_time)
+      schedule1 = IceCube::RecurrenceSchedule.new(start_time)
       schedule1.rrule IceCube::Rule.weekly.day(:friday)
-      schedule2 = IceCube::Schedule.new(start_time)
+      schedule2 = IceCube::RecurrenceSchedule.new(start_time)
       schedule2.rrule IceCube::Rule.weekly.day(:friday)
       schedule2.conflicts_with?(schedule1, start_time + IceCube::ONE_WEEK).
         should be_true
@@ -193,9 +193,9 @@ describe IceCube::Schedule do
 
     it 'should return false if conflict is not present based on duration' do
       start_time = Time.now
-      schedule1 = IceCube::Schedule.new(start_time, :duration => IceCube::ONE_HOUR)
+      schedule1 = IceCube::RecurrenceSchedule.new(start_time, :duration => IceCube::ONE_HOUR)
       schedule1.rrule IceCube::Rule.weekly.day(:monday)
-      schedule2 = IceCube::Schedule.new(start_time, :duration => IceCube::ONE_HOUR)
+      schedule2 = IceCube::RecurrenceSchedule.new(start_time, :duration => IceCube::ONE_HOUR)
       schedule2.rrule IceCube::Rule.weekly.day(:tuesday)
       conflict = schedule1.conflicts_with?(schedule2, start_time + IceCube::ONE_WEEK)
       conflict.should be_false
@@ -203,9 +203,9 @@ describe IceCube::Schedule do
 
     it 'should return false if conflict is not present on same day based on duration' do
       start_time = Time.now
-      schedule1 = IceCube::Schedule.new(start_time, :duration => IceCube::ONE_HOUR)
+      schedule1 = IceCube::RecurrenceSchedule.new(start_time, :duration => IceCube::ONE_HOUR)
       schedule1.rrule IceCube::Rule.daily
-      schedule2 = IceCube::Schedule.new(start_time + 3600, :duration => IceCube::ONE_HOUR)
+      schedule2 = IceCube::RecurrenceSchedule.new(start_time + 3600, :duration => IceCube::ONE_HOUR)
       schedule2.rrule IceCube::Rule.daily
       conflict = schedule1.conflicts_with?(schedule2, start_time + IceCube::ONE_WEEK)
       conflict.should be_false
@@ -213,9 +213,9 @@ describe IceCube::Schedule do
 
     it 'should return true if conflict is present on same day based on duration' do
       start_time = Time.now
-      schedule1 = IceCube::Schedule.new(start_time, :duration => IceCube::ONE_HOUR)
+      schedule1 = IceCube::RecurrenceSchedule.new(start_time, :duration => IceCube::ONE_HOUR)
       schedule1.rrule IceCube::Rule.daily
-      schedule2 = IceCube::Schedule.new(start_time + 600, :duration => IceCube::ONE_HOUR)
+      schedule2 = IceCube::RecurrenceSchedule.new(start_time + 600, :duration => IceCube::ONE_HOUR)
       schedule2.rrule IceCube::Rule.daily
       conflict = schedule1.conflicts_with?(schedule2, start_time + IceCube::ONE_WEEK)
       conflict.should be_true
@@ -223,9 +223,9 @@ describe IceCube::Schedule do
 
     it 'should return true if conflict is present and no recurrence' do
       start_time = Time.now
-      schedule1 = IceCube::Schedule.new(start_time, :duration => IceCube::ONE_HOUR)
+      schedule1 = IceCube::RecurrenceSchedule.new(start_time, :duration => IceCube::ONE_HOUR)
       schedule1.add_recurrence_time(start_time)
-      schedule2 = IceCube::Schedule.new(start_time + 600, :duration => IceCube::ONE_HOUR)
+      schedule2 = IceCube::RecurrenceSchedule.new(start_time + 600, :duration => IceCube::ONE_HOUR)
       schedule2.add_recurrence_time(start_time + 600)
       conflict = schedule1.conflicts_with?(schedule2)
       conflict.should be_true
@@ -235,9 +235,9 @@ describe IceCube::Schedule do
 
     it 'should return false if conflict is not present and no recurrence' do
       start_time = Time.now
-      schedule1 = IceCube::Schedule.new(start_time, :duration => IceCube::ONE_HOUR)
+      schedule1 = IceCube::RecurrenceSchedule.new(start_time, :duration => IceCube::ONE_HOUR)
       schedule1.add_recurrence_time(start_time)
-      schedule2 = IceCube::Schedule.new(start_time + IceCube::ONE_HOUR, :duration => IceCube::ONE_HOUR)
+      schedule2 = IceCube::RecurrenceSchedule.new(start_time + IceCube::ONE_HOUR, :duration => IceCube::ONE_HOUR)
       schedule2.add_recurrence_time(start_time + IceCube::ONE_HOUR)
       conflict = schedule1.conflicts_with?(schedule2)
       conflict.should be_false
@@ -247,9 +247,9 @@ describe IceCube::Schedule do
 
     it 'should return false if conflict is not present and single recurrence' do
        start_time = Time.now
-      schedule1 = IceCube::Schedule.new(start_time, :duration => IceCube::ONE_HOUR)
+      schedule1 = IceCube::RecurrenceSchedule.new(start_time, :duration => IceCube::ONE_HOUR)
       schedule1.add_recurrence_time(start_time)
-      schedule2 = IceCube::Schedule.new(start_time + IceCube::ONE_HOUR, :duration => IceCube::ONE_HOUR)
+      schedule2 = IceCube::RecurrenceSchedule.new(start_time + IceCube::ONE_HOUR, :duration => IceCube::ONE_HOUR)
       schedule2.rrule IceCube::Rule.daily
       conflict = schedule1.conflicts_with?(schedule2)
       conflict.should be_false
@@ -259,9 +259,9 @@ describe IceCube::Schedule do
 
    it 'should return true if conflict is present and single recurrence' do
       start_time = Time.now
-      schedule1 = IceCube::Schedule.new(start_time, :duration => IceCube::ONE_HOUR)
+      schedule1 = IceCube::RecurrenceSchedule.new(start_time, :duration => IceCube::ONE_HOUR)
       schedule1.add_recurrence_time(start_time)
-      schedule2 = IceCube::Schedule.new(start_time + 600, :duration => IceCube::ONE_HOUR)
+      schedule2 = IceCube::RecurrenceSchedule.new(start_time + 600, :duration => IceCube::ONE_HOUR)
       schedule2.rrule IceCube::Rule.daily
       conflict = schedule1.conflicts_with?(schedule2)
       conflict.should be_true
@@ -271,9 +271,9 @@ describe IceCube::Schedule do
 
     it 'should return false if conflict is not present and single recurrence and time originally specified as Time' do
       start_time = Time.local(2020, 9, 21, 11, 30, 0)
-      schedule1 = IceCube::Schedule.new(start_time, :duration => IceCube::ONE_HOUR)
+      schedule1 = IceCube::RecurrenceSchedule.new(start_time, :duration => IceCube::ONE_HOUR)
       schedule1.add_recurrence_time(start_time)
-      schedule2 = IceCube::Schedule.new(start_time + IceCube::ONE_HOUR, :duration => IceCube::ONE_HOUR)
+      schedule2 = IceCube::RecurrenceSchedule.new(start_time + IceCube::ONE_HOUR, :duration => IceCube::ONE_HOUR)
       schedule2.add_recurrence_time(start_time + IceCube::ONE_HOUR)
       conflict = schedule1.conflicts_with?(schedule2)
       conflict.should be_false
@@ -286,7 +286,7 @@ describe IceCube::Schedule do
   describe :each do
 
     it 'should be able to yield occurrences for a schedule' do
-      schedule = IceCube::Schedule.new
+      schedule = IceCube::RecurrenceSchedule.new
       schedule.add_recurrence_rule IceCube::Rule.daily
       i = 0
       answers = []
@@ -299,12 +299,12 @@ describe IceCube::Schedule do
     end
 
     it 'should return self' do
-      schedule = IceCube::Schedule.new
+      schedule = IceCube::RecurrenceSchedule.new
       schedule.each_occurrence { |s| }.should == schedule
     end
 
     it 'should stop itself when hitting the end of a schedule' do
-      schedule = IceCube::Schedule.new(t0 = Time.now)
+      schedule = IceCube::RecurrenceSchedule.new(t0 = Time.now)
       t1 = t0 + 24 * IceCube::ONE_DAY
       schedule.add_recurrence_time t1
       answers = []
@@ -316,7 +316,7 @@ describe IceCube::Schedule do
 
   describe :all_occurrences_enumerator do
     it 'should be equivalent to all_occurrences in terms of arrays' do
-      schedule = IceCube::Schedule.new(Time.now, :duration => IceCube::ONE_HOUR)
+      schedule = IceCube::RecurrenceSchedule.new(Time.now, :duration => IceCube::ONE_HOUR)
       schedule.add_recurrence_rule IceCube::Rule.daily.until(Time.now + 3 * IceCube::ONE_DAY)
       schedule.all_occurrences == schedule.all_occurrences_enumerator.to_a
     end
@@ -324,7 +324,7 @@ describe IceCube::Schedule do
 
   describe :remaining_occurrences_enumerator do
     it 'should be equivalent to remaining_occurrences in terms of arrays' do
-      schedule = IceCube::Schedule.new(Time.now, :duration => IceCube::ONE_HOUR)
+      schedule = IceCube::RecurrenceSchedule.new(Time.now, :duration => IceCube::ONE_HOUR)
       schedule.add_recurrence_rule IceCube::Rule.daily.until(Time.now + 3 * IceCube::ONE_DAY)
       schedule.remaining_occurrences == schedule.remaining_occurrences_enumerator.to_a
     end
@@ -333,30 +333,30 @@ describe IceCube::Schedule do
   describe :all_occurrences do
 
     it 'has end times for each occurrence' do
-      schedule = IceCube::Schedule.new(Time.now, :duration => IceCube::ONE_HOUR)
+      schedule = IceCube::RecurrenceSchedule.new(Time.now, :duration => IceCube::ONE_HOUR)
       schedule.add_recurrence_rule IceCube::Rule.daily.until(Time.now + 3 * IceCube::ONE_DAY)
       schedule.all_occurrences.all? { |o| o.end_time.should == o + IceCube::ONE_HOUR }
     end
 
     it 'should include its start time when empty' do
-      schedule = IceCube::Schedule.new(t0 = Time.now)
+      schedule = IceCube::RecurrenceSchedule.new(t0 = Time.now)
       schedule.all_occurrences.should == [t0]
     end
 
    it 'should have one occurrence with one recurrence time at start_time' do
-      schedule = IceCube::Schedule.new(t0 = Time.local(2012, 12, 12, 12, 12, 12))
+      schedule = IceCube::RecurrenceSchedule.new(t0 = Time.local(2012, 12, 12, 12, 12, 12))
       schedule.add_recurrence_time t0
       schedule.all_occurrences.should == [t0]
     end
 
     it 'should have two occurrences with a recurrence time after start_time' do
-      schedule = IceCube::Schedule.new(t0 = Time.local(2012, 12, 12, 12, 12, 12))
+      schedule = IceCube::RecurrenceSchedule.new(t0 = Time.local(2012, 12, 12, 12, 12, 12))
       schedule.add_recurrence_time t1 = Time.local(2013,  1, 13,  1, 13,  1)
       schedule.all_occurrences.should == [t0, t1]
     end
 
     it 'should return an error if there is nothing to stop it' do
-      schedule = IceCube::Schedule.new
+      schedule = IceCube::RecurrenceSchedule.new
       schedule.rrule IceCube::Rule.daily
       lambda do
         schedule.all_occurrences
@@ -364,7 +364,7 @@ describe IceCube::Schedule do
     end
 
     it 'should consider count limits separately for multiple rules' do
-      schedule = IceCube::Schedule.new
+      schedule = IceCube::RecurrenceSchedule.new
       schedule.rrule IceCube::Rule.minutely.count(3)
       schedule.rrule IceCube::Rule.daily.count(3)
       schedule.all_occurrences.size.should == 5
@@ -378,7 +378,7 @@ describe IceCube::Schedule do
 
     it 'should be able to calculate next occurrences ignoring excluded times' do
       start_time = Time.now
-      schedule = IceCube::Schedule.new start_time
+      schedule = IceCube::RecurrenceSchedule.new start_time
       schedule.rrule IceCube::Rule.daily(1)
       schedule.extime start_time + IceCube::ONE_DAY
       occurrences = schedule.next_occurrences(2, start_time) # 3 occurrences in the next year
@@ -389,7 +389,7 @@ describe IceCube::Schedule do
     end
 
     it 'should be empty if nothing is found before closing time' do
-      schedule = IceCube::Schedule.new(t0 = Time.utc(2013, 1, 1)) do |s|
+      schedule = IceCube::RecurrenceSchedule.new(t0 = Time.utc(2013, 1, 1)) do |s|
         next_year = Date.new(t0.year + 1, t0.month, t0.day)
         s.add_recurrence_rule nonsense.until(next_year)
       end
@@ -398,7 +398,7 @@ describe IceCube::Schedule do
     end
 
     it "should not skip ahead a day when called with a date" do
-      schedule = IceCube::Schedule.new(Time.utc(2014, 1, 1, 12, 34, 56)) do |s|
+      schedule = IceCube::RecurrenceSchedule.new(Time.utc(2014, 1, 1, 12, 34, 56)) do |s|
         s.add_recurrence_rule IceCube::Rule.hourly
       end
       next_hours = schedule.next_occurrences(2, Date.new(2014, 1, 2))
@@ -412,7 +412,7 @@ describe IceCube::Schedule do
 
     it 'should be able to calculate the next occurrence past an exception time' do
       start_time = Time.now
-      schedule = IceCube::Schedule.new start_time
+      schedule = IceCube::RecurrenceSchedule.new start_time
       schedule.rrule IceCube::Rule.daily(1)
       schedule.extime start_time + IceCube::ONE_DAY
       occurrence = schedule.next_occurrence(start_time) # 3 occurrences in the next year
@@ -455,7 +455,7 @@ describe IceCube::Schedule do
 
     it 'returns the previous occurrence for a time in the schedule' do
       t0 = Time.utc(2013, 5, 18, 12, 34)
-      schedule = IceCube::Schedule.new(t0)
+      schedule = IceCube::RecurrenceSchedule.new(t0)
       schedule.add_recurrence_rule IceCube::Rule.daily
       previous = schedule.previous_occurrence(t0 + 2 * ONE_DAY)
       previous.should == t0 + ONE_DAY
@@ -463,14 +463,14 @@ describe IceCube::Schedule do
 
     it 'returns nil given the start time' do
       t0 = Time.utc(2013, 5, 18, 12, 34)
-      schedule = IceCube::Schedule.new(t0)
+      schedule = IceCube::RecurrenceSchedule.new(t0)
       schedule.add_recurrence_rule IceCube::Rule.daily
       previous = schedule.previous_occurrence(t0)
       previous.should be_nil
     end
 
     it "should not skip back a day when called with a date" do
-      schedule = IceCube::Schedule.new(Time.utc(2014, 1, 1, 12, 34, 56)) do |s|
+      schedule = IceCube::RecurrenceSchedule.new(Time.utc(2014, 1, 1, 12, 34, 56)) do |s|
         s.add_recurrence_rule IceCube::Rule.hourly
       end
       prev_hour = schedule.previous_occurrence(Date.new(2014, 1, 2))
@@ -483,7 +483,7 @@ describe IceCube::Schedule do
 
     it 'returns an array of previous occurrences from a given time' do
       t0 = Time.utc(2013, 5, 18, 12, 34)
-      schedule = IceCube::Schedule.new(t0)
+      schedule = IceCube::RecurrenceSchedule.new(t0)
       schedule.add_recurrence_rule IceCube::Rule.daily
       previous = schedule.previous_occurrences(2, t0 + 3 * ONE_DAY)
       previous.should == [t0 + ONE_DAY, t0 + 2 * ONE_DAY]
@@ -491,7 +491,7 @@ describe IceCube::Schedule do
 
     it 'limits the returned occurrences to a given count' do
       t0 = Time.utc(2013, 5, 18, 12, 34)
-      schedule = IceCube::Schedule.new(t0)
+      schedule = IceCube::RecurrenceSchedule.new(t0)
       schedule.add_recurrence_rule IceCube::Rule.daily
       previous = schedule.previous_occurrences(999, t0 + 2 * ONE_DAY)
       previous.should == [t0, t0 + ONE_DAY]
@@ -499,14 +499,14 @@ describe IceCube::Schedule do
 
     it 'returns empty array given the start time' do
       t0 = Time.utc(2013, 5, 18, 12, 34)
-      schedule = IceCube::Schedule.new(t0)
+      schedule = IceCube::RecurrenceSchedule.new(t0)
       schedule.add_recurrence_rule IceCube::Rule.daily
       previous = schedule.previous_occurrences(2, t0)
       previous.should == []
     end
 
     it "should not skip back a day when called with a date" do
-      schedule = IceCube::Schedule.new(Time.utc(2014, 1, 1, 12, 34, 56)) do |s|
+      schedule = IceCube::RecurrenceSchedule.new(Time.utc(2014, 1, 1, 12, 34, 56)) do |s|
         s.add_recurrence_rule IceCube::Rule.hourly
       end
       prev_hours = schedule.previous_occurrences(2, Date.new(2014, 1, 2))
@@ -521,7 +521,7 @@ describe IceCube::Schedule do
     it 'returns the last occurrence for a terminating schedule' do
       t0 = Time.utc(2013, 5, 18, 12, 34)
       t1 = Time.utc(2013, 5, 31, 12, 34)
-      schedule = IceCube::Schedule.new(t0)
+      schedule = IceCube::RecurrenceSchedule.new(t0)
       schedule.add_recurrence_rule IceCube::Rule.daily.until(t1 + 1)
       schedule.last.should == t1
     end
@@ -529,13 +529,13 @@ describe IceCube::Schedule do
     it 'returns an array of occurrences given a number' do
       t0 = Time.utc(2013, 5, 18, 12, 34)
       t1 = Time.utc(2013, 5, 31, 12, 34)
-      schedule = IceCube::Schedule.new(t0)
+      schedule = IceCube::RecurrenceSchedule.new(t0)
       schedule.add_recurrence_rule IceCube::Rule.daily.until(t1 + 1)
       schedule.last(2).should == [t1 - ONE_DAY, t1]
     end
 
     it 'raises an error for a non-terminating schedule' do
-      schedule = IceCube::Schedule.new
+      schedule = IceCube::RecurrenceSchedule.new
       schedule.add_recurrence_rule IceCube::Rule.daily
       expect { schedule.last }.to raise_error
     end
@@ -545,7 +545,7 @@ describe IceCube::Schedule do
   describe :start_time= do
 
     it 'should modify start date in rrule_occurrence_heads when changed' do
-      schedule = IceCube::Schedule.new(Time.now - 1000)
+      schedule = IceCube::RecurrenceSchedule.new(Time.now - 1000)
       schedule.rrule IceCube::Rule.daily
       schedule.start_time = (start_time = Time.now)
       (Time.now - schedule.first.start_time).should be < 100
@@ -556,7 +556,7 @@ describe IceCube::Schedule do
   describe :recurrence_rules do
 
     it 'should not include rules for single occurrences' do
-      schedule = IceCube::Schedule.new Time.now
+      schedule = IceCube::RecurrenceSchedule.new Time.now
       schedule.add_recurrence_time Time.now
       schedule.rrules.should be_empty
     end
@@ -566,7 +566,7 @@ describe IceCube::Schedule do
   describe :remove_recurrence_rule do
 
     it 'should be able to one rule based on the comparator' do
-      schedule = IceCube::Schedule.new Time.now
+      schedule = IceCube::RecurrenceSchedule.new Time.now
       schedule.rrule IceCube::Rule.daily
       schedule.rrule IceCube::Rule.daily(2)
       schedule.remove_recurrence_rule schedule.rrules.first
@@ -574,7 +574,7 @@ describe IceCube::Schedule do
     end
 
     it 'should be able to remove multiple rules based on the comparator' do
-      schedule = IceCube::Schedule.new Time.now
+      schedule = IceCube::RecurrenceSchedule.new Time.now
       schedule.rrule IceCube::Rule.daily
       schedule.rrule IceCube::Rule.daily
       schedule.remove_recurrence_rule schedule.rrules.first
@@ -582,7 +582,7 @@ describe IceCube::Schedule do
     end
 
     it 'should return the rule that was removed' do
-      schedule = IceCube::Schedule.new Time.now
+      schedule = IceCube::RecurrenceSchedule.new Time.now
       rule = IceCube::Rule.daily
       schedule.rrule rule
       rule2 = schedule.remove_recurrence_rule rule
@@ -590,7 +590,7 @@ describe IceCube::Schedule do
     end
 
     it 'should return [] if nothing was removed' do
-      schedule = IceCube::Schedule.new Time.now
+      schedule = IceCube::RecurrenceSchedule.new Time.now
       rule = IceCube::Rule.daily
       schedule.remove_recurrence_rule(rule).should == []
     end
@@ -601,21 +601,21 @@ describe IceCube::Schedule do
 
     it 'should be able to remove a recurrence date from a schedule' do
       time = Time.now
-      schedule = IceCube::Schedule.new(time)
+      schedule = IceCube::RecurrenceSchedule.new(time)
       schedule.add_recurrence_time time
       schedule.remove_recurrence_time time
       schedule.recurrence_times.should be_empty
     end
 
     it 'should return the time that was removed' do
-      schedule = IceCube::Schedule.new Time.now
+      schedule = IceCube::RecurrenceSchedule.new Time.now
       time = Time.now
       schedule.rtime time
       schedule.remove_rtime(time).should == time
     end
 
     it 'should return nil if the date was not in the schedule' do
-      schedule = IceCube::Schedule.new Time.now
+      schedule = IceCube::RecurrenceSchedule.new Time.now
       schedule.remove_recurrence_time(Time.now).should be_nil
     end
 
@@ -625,21 +625,21 @@ describe IceCube::Schedule do
 
     it 'should be able to remove a exception date from a schedule' do
       time = Time.now
-      schedule = IceCube::Schedule.new(time)
+      schedule = IceCube::RecurrenceSchedule.new(time)
       schedule.extime time
       schedule.remove_exception_time time
       schedule.exception_times.should be_empty
     end
 
     it 'should return the date that was removed' do
-      schedule = IceCube::Schedule.new Time.now
+      schedule = IceCube::RecurrenceSchedule.new Time.now
       time = Time.now
       schedule.extime time
       schedule.remove_extime(time).should == time
     end
 
     it 'should return nil if the date was not in the schedule' do
-      schedule = IceCube::Schedule.new Time.now
+      schedule = IceCube::RecurrenceSchedule.new Time.now
       schedule.remove_exception_time(Time.now).should be_nil
     end
 
@@ -647,7 +647,7 @@ describe IceCube::Schedule do
 
   describe :occurs_on? do
 
-    subject(:schedule) { IceCube::Schedule.new(start_time) }
+    subject(:schedule) { IceCube::RecurrenceSchedule.new(start_time) }
 
     shared_examples "occurring on a given day" do
       WORLD_TIME_ZONES.each do |zone|
@@ -736,7 +736,7 @@ describe IceCube::Schedule do
     end
 
     it 'should be true for multiple rtimes' do
-      schedule = IceCube::Schedule.new(Time.local(2010, 7, 10, 16))
+      schedule = IceCube::RecurrenceSchedule.new(Time.local(2010, 7, 10, 16))
       schedule.add_recurrence_time(Time.local(2010, 7, 11, 16))
       schedule.add_recurrence_time(Time.local(2010, 7, 12, 16))
       schedule.add_recurrence_time(Time.local(2010, 7, 13, 16))
@@ -749,7 +749,7 @@ describe IceCube::Schedule do
   end
 
   def compare_time_zone_info(start_time)
-    schedule = IceCube::Schedule.new(start_time)
+    schedule = IceCube::RecurrenceSchedule.new(start_time)
     schedule.rrule IceCube::Rule.yearly(1)
     occurrence = schedule.next_occurrence
 

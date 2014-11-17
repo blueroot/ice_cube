@@ -2,7 +2,7 @@ require 'yaml'
 
 module IceCube
 
-  class Schedule
+  class RecurrenceSchedule
 
     extend Deprecated
 
@@ -251,7 +251,7 @@ module IceCube
     end
 
     # Determine if this schedule conflicts with another schedule
-    # @param [IceCube::Schedule] other_schedule - The schedule to compare to
+    # @param [IceCube::RecurrenceSchedule] other_schedule - The schedule to compare to
     # @param [Time] closing_time - the last time to consider
     # @return [Boolean] whether or not the schedules conflict at all
     def conflicts_with?(other_schedule, closing_time = nil)

@@ -9,7 +9,7 @@ module IceCube
 
     def to_schedule
       data = normalize_keys(hash)
-      schedule = IceCube::Schedule.new parse_time(data[:start_time])
+      schedule = IceCube::RecurrenceSchedule.new parse_time(data[:start_time])
       apply_duration schedule, data
       apply_end_time schedule, data
       apply_rrules schedule, data

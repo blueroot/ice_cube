@@ -3,7 +3,7 @@ require 'active_support/time'
 
 
 module IceCube
-  describe Schedule, 'using ActiveSupport' do
+  describe RecurrenceSchedule, 'using ActiveSupport' do
 
     before(:all) { Time.zone = 'Eastern Time (US & Canada)' }
 
@@ -15,13 +15,13 @@ module IceCube
     end
 
     it 'works with a single recurrence time starting from a TimeWithZone' do
-      schedule = Schedule.new(t0 = Time.zone.parse("2010-02-05 05:00:00"))
+      schedule = RecurrenceSchedule.new(t0 = Time.zone.parse("2010-02-05 05:00:00"))
       schedule.add_recurrence_time t0
       schedule.all_occurrences.should == [t0]
     end
 
     it 'works with a monthly recurrence rule starting from a TimeWithZone' do
-      schedule = Schedule.new(t0 = Time.zone.parse("2010-02-05 05:00:00"))
+      schedule = RecurrenceSchedule.new(t0 = Time.zone.parse("2010-02-05 05:00:00"))
       schedule.add_recurrence_rule Rule.monthly
       schedule.first(10).should == [
         Time.zone.parse("2010-02-05 05:00"), Time.zone.parse("2010-03-05 05:00"),
@@ -34,7 +34,7 @@ module IceCube
 
     it 'works with a monthly schedule converting to UTC across DST' do
       Time.zone = 'Eastern Time (US & Canada)'
-      schedule = Schedule.new(t0 = Time.zone.parse("2009-10-28 19:30:00"))
+      schedule = RecurrenceSchedule.new(t0 = Time.zone.parse("2009-10-28 19:30:00"))
       schedule.add_recurrence_rule Rule.monthly
       schedule.first(7).map { |d| d.getutc }.should == [
         Time.utc(2009, 10, 28, 23, 30, 0), Time.utc(2009, 11, 29,  0, 30, 0),
@@ -45,34 +45,34 @@ module IceCube
     end
 
     it 'can round trip TimeWithZone to YAML' do
-      schedule = Schedule.new(t0 = Time.zone.parse("2010-02-05 05:00:00"))
+      schedule = RecurrenceSchedule.new(t0 = Time.zone.parse("2010-02-05 05:00:00"))
       schedule.add_recurrence_time t0
-      schedule2 = Schedule.from_yaml(schedule.to_yaml)
+      schedule2 = RecurrenceSchedule.from_yaml(schedule.to_yaml)
       schedule.all_occurrences.should == schedule2.all_occurrences
     end
 
     it 'uses local zone from start time to determine occurs_on? from the beginning of day' do
-      schedule = Schedule.new(t0 = Time.local(2009, 2, 7, 23, 59, 59))
+      schedule = RecurrenceSchedule.new(t0 = Time.local(2009, 2, 7, 23, 59, 59))
       schedule.add_recurrence_rule Rule.daily
       schedule.occurs_on?(Date.new(2009, 2, 7)).should be_true
     end
 
     it 'uses local zone from start time to determine occurs_on? to the end of day' do
-      schedule = Schedule.new(t0 = Time.local(2009, 2, 7, 0, 0, 0))
+      schedule = RecurrenceSchedule.new(t0 = Time.local(2009, 2, 7, 0, 0, 0))
       schedule.add_recurrence_rule Rule.daily
       schedule.occurs_on?(Date.new(2009, 2, 7)).should be_true
     end
 
     it 'should use the correct zone for next_occurrences before start_time' do
       future_time = Time.zone.now.beginning_of_day + 1.day
-      schedule = Schedule.new(future_time)
+      schedule = RecurrenceSchedule.new(future_time)
       schedule.add_recurrence_rule Rule.daily
       schedule.next_occurrence.time_zone.should == schedule.start_time.time_zone
     end
 
     it 'should use the correct zone for next_occurrences after start_time' do
       past_time = Time.zone.now.beginning_of_day
-      schedule = Schedule.new(past_time)
+      schedule = RecurrenceSchedule.new(past_time)
       schedule.add_recurrence_rule Rule.daily
       schedule.next_occurrence.time_zone.should == schedule.start_time.time_zone
     end
@@ -81,7 +81,7 @@ module IceCube
 
       let(:schedule) do
         utc = Time.utc(2013, 1, 1).in_time_zone('UTC')
-        Schedule.new(utc) { |s| s.add_recurrence_rule Rule.daily.count(3) }
+        RecurrenceSchedule.new(utc) { |s| s.add_recurrence_rule Rule.daily.count(3) }
       end
 
       let(:reference_time) do
@@ -128,7 +128,7 @@ module IceCube
 
       it "uses schedule zone for occurrences_between with a rule terminated by #count" do
         utc = Time.utc(2013, 1, 1).in_time_zone('UTC')
-        s = Schedule.new(utc) { |s| s.add_recurrence_rule Rule.daily.count(3) }
+        s = RecurrenceSchedule.new(utc) { |s| s.add_recurrence_rule Rule.daily.count(3) }
         occurrences_between = s.occurrences_between(reference_time, reference_time + 1.day)
         occurrences_between.should == [Time.utc(2013, 1, 1), Time.utc(2013, 1, 2)]
         occurrences_between.each do |t|
@@ -138,7 +138,7 @@ module IceCube
 
       it "uses schedule zone for occurrences_between with a rule terminated by #until" do
         utc = Time.utc(2013, 1, 1).in_time_zone('UTC')
-        s = Schedule.new(utc) { |s| s.add_recurrence_rule Rule.daily.until(utc.advance(:days => 3)) }
+        s = RecurrenceSchedule.new(utc) { |s| s.add_recurrence_rule Rule.daily.until(utc.advance(:days => 3)) }
         occurrences_between = s.occurrences_between(reference_time, reference_time + 1.day)
         occurrences_between.should == [Time.utc(2013, 1, 1), Time.utc(2013, 1, 2)]
         occurrences_between.each do |t|
@@ -148,7 +148,7 @@ module IceCube
 
       it "uses schedule zone for occurrences_between with an unterminated rule" do
         utc = Time.utc(2013, 1, 1).in_time_zone('UTC')
-        s = Schedule.new(utc) { |s| s.add_recurrence_rule Rule.daily }
+        s = RecurrenceSchedule.new(utc) { |s| s.add_recurrence_rule Rule.daily }
         occurrences_between = s.occurrences_between(reference_time, reference_time + 1.day)
         occurrences_between.should == [Time.utc(2013, 1, 1), Time.utc(2013, 1, 2)]
         occurrences_between.each do |t|

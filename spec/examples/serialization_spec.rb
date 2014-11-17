@@ -1,14 +1,14 @@
 require 'active_support/time'
 require File.dirname(__FILE__) + '/../spec_helper'
 
-describe IceCube::Schedule do
+describe IceCube::RecurrenceSchedule do
 
-  let(:schedule) { IceCube::Schedule.new Time.now }
+  let(:schedule) { IceCube::RecurrenceSchedule.new Time.now }
   let(:yaml)     { described_class.dump(schedule) }
 
   describe "::dump(schedule)" do
 
-    it "serializes a Schedule object as YAML string" do
+    it "serializes a RecurrenceSchedule object as YAML string" do
       yaml.should start_with "---\n"
     end
 

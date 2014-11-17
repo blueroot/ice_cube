@@ -9,7 +9,7 @@ module IceCube
   autoload :FlexibleHash, 'ice_cube/flexible_hash'
 
   autoload :Rule, 'ice_cube/rule'
-  autoload :Schedule, 'ice_cube/schedule'
+  autoload :RecurrenceSchedule, 'ice_cube/recurrence_schedule'
   autoload :Occurrence, 'ice_cube/occurrence'
 
   autoload :IcalBuilder, 'ice_cube/builders/ical_builder'
@@ -65,13 +65,13 @@ module IceCube
   ONE_DAY =    ONE_HOUR   * 24
   ONE_WEEK =   ONE_DAY    * 7
 
-  # Defines the format used by IceCube when printing out Schedule#to_s.
+  # Defines the format used by IceCube when printing out RecurrenceSchedule#to_s.
   # Defaults to '%B %e, %Y'
   def self.to_s_time_format
     @to_s_time_format ||= '%B %e, %Y'
   end
 
-  # Sets the format used by IceCube when printing out Schedule#to_s.
+  # Sets the format used by IceCube when printing out RecurrenceSchedule#to_s.
   def self.to_s_time_format=(format)
     @to_s_time_format = format
   end

@@ -1,10 +1,10 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 
-describe IceCube::Schedule, 'to_s' do
+describe IceCube::RecurrenceSchedule, 'to_s' do
 
   it 'should represent its start time by default' do
     t0 = Time.local(2013, 2, 14)
-    IceCube::Schedule.new(t0).to_s.should == 'February 14, 2013'
+    IceCube::RecurrenceSchedule.new(t0).to_s.should == 'February 14, 2013'
   end
 
   it 'should have a useful base to_s representation for a secondly rule' do
@@ -78,51 +78,51 @@ describe IceCube::Schedule, 'to_s' do
   end
 
   it 'should show start time for an empty schedule' do
-    schedule = IceCube::Schedule.new Time.local(2010, 3, 20)
+    schedule = IceCube::RecurrenceSchedule.new Time.local(2010, 3, 20)
     schedule.to_s.should == "March 20, 2010"
   end
 
   it 'should work with a single date' do
-    schedule = IceCube::Schedule.new Time.local(2010, 3, 20)
+    schedule = IceCube::RecurrenceSchedule.new Time.local(2010, 3, 20)
     schedule.add_recurrence_time Time.local(2010, 3, 20)
     schedule.to_s.should == "March 20, 2010"
   end
 
   it 'should work with additional dates' do
-    schedule = IceCube::Schedule.new Time.local(2010, 3, 20)
+    schedule = IceCube::RecurrenceSchedule.new Time.local(2010, 3, 20)
     schedule.add_recurrence_time Time.local(2010, 3, 20)
     schedule.add_recurrence_time Time.local(2010, 3, 21)
     schedule.to_s.should == 'March 20, 2010 / March 21, 2010'
   end
 
   it 'should order dates that are out of order' do
-    schedule = IceCube::Schedule.new(t0 = Time.local(2010, 3, 20))
+    schedule = IceCube::RecurrenceSchedule.new(t0 = Time.local(2010, 3, 20))
     schedule.add_recurrence_time t1 = Time.local(2010, 3, 19)
     schedule.to_s.should == 'March 19, 2010 / March 20, 2010'
   end
 
   it 'should remove duplicated start time' do
-    schedule = IceCube::Schedule.new t0 = Time.local(2010, 3, 20)
+    schedule = IceCube::RecurrenceSchedule.new t0 = Time.local(2010, 3, 20)
     schedule.add_recurrence_time t0
     schedule.to_s.should == 'March 20, 2010'
   end
 
   it 'should remove duplicate rtimes' do
-    schedule = IceCube::Schedule.new t0 = Time.local(2010, 3, 19)
+    schedule = IceCube::RecurrenceSchedule.new t0 = Time.local(2010, 3, 19)
     schedule.add_recurrence_time Time.local(2010, 3, 20)
     schedule.add_recurrence_time Time.local(2010, 3, 20)
     schedule.to_s.should == 'March 19, 2010 / March 20, 2010'
   end
 
   it 'should work with rules and dates' do
-    schedule = IceCube::Schedule.new Time.local(2010, 3, 19)
+    schedule = IceCube::RecurrenceSchedule.new Time.local(2010, 3, 19)
     schedule.add_recurrence_time Time.local(2010, 3, 20)
     schedule.add_recurrence_rule IceCube::Rule.weekly
     schedule.to_s.should == 'March 20, 2010 / Weekly'
   end
 
   it 'should work with rules and times and exception times' do
-    schedule = IceCube::Schedule.new Time.local(2010, 3, 20)
+    schedule = IceCube::RecurrenceSchedule.new Time.local(2010, 3, 20)
     schedule.add_recurrence_rule IceCube::Rule.weekly
     schedule.add_recurrence_time Time.local(2010, 3, 20)
     schedule.add_exception_time Time.local(2010, 3, 20) # ignored
@@ -131,7 +131,7 @@ describe IceCube::Schedule, 'to_s' do
   end
 
   it 'should work with a single rrule' do
-    schedule = IceCube::Schedule.new Time.local(2010, 3, 20)
+    schedule = IceCube::RecurrenceSchedule.new Time.local(2010, 3, 20)
     schedule.add_recurrence_rule IceCube::Rule.weekly.day_of_week(:monday => [1])
     schedule.to_s.should == schedule.rrules[0].to_s
   end
@@ -182,19 +182,19 @@ describe IceCube::Schedule, 'to_s' do
   end
 
   it 'should be able to reflect until dates' do
-    schedule = IceCube::Schedule.new(Time.now)
+    schedule = IceCube::RecurrenceSchedule.new(Time.now)
     schedule.rrule IceCube::Rule.weekly.until(Time.local(2012, 2, 3))
     schedule.to_s.should == 'Weekly until February  3, 2012'
   end
 
   it 'should be able to reflect count' do
-    schedule = IceCube::Schedule.new(Time.now)
+    schedule = IceCube::RecurrenceSchedule.new(Time.now)
     schedule.add_recurrence_rule IceCube::Rule.weekly.count(1)
     schedule.to_s.should == 'Weekly 1 time'
   end
 
   it 'should be able to reflect count (proper pluralization)' do
-    schedule = IceCube::Schedule.new(Time.now)
+    schedule = IceCube::RecurrenceSchedule.new(Time.now)
     schedule.add_recurrence_rule IceCube::Rule.weekly.count(2)
     schedule.to_s.should == 'Weekly 2 times'
   end

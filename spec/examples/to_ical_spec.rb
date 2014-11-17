@@ -96,18 +96,18 @@ describe IceCube, 'to_ical' do
 
   it 'should be able to serialize a base schedule to ical in local time' do
     Time.zone = "Eastern Time (US & Canada)"
-    schedule = IceCube::Schedule.new(Time.zone.local(2010, 5, 10, 9, 0, 0))
+    schedule = IceCube::RecurrenceSchedule.new(Time.zone.local(2010, 5, 10, 9, 0, 0))
     schedule.to_ical.should == "DTSTART;TZID=EDT:20100510T090000"
   end
 
   it 'should be able to serialize a base schedule to ical in UTC time' do
-    schedule = IceCube::Schedule.new(Time.utc(2010, 5, 10, 9, 0, 0))
+    schedule = IceCube::RecurrenceSchedule.new(Time.utc(2010, 5, 10, 9, 0, 0))
     schedule.to_ical.should == "DTSTART:20100510T090000Z"
   end
 
   it 'should be able to serialize a schedule with one rrule' do
     Time.zone = 'Pacific Time (US & Canada)'
-    schedule = IceCube::Schedule.new(Time.zone.local(2010, 5, 10, 9, 0, 0))
+    schedule = IceCube::RecurrenceSchedule.new(Time.zone.local(2010, 5, 10, 9, 0, 0))
     schedule.add_recurrence_rule IceCube::Rule.weekly
     # test equality
     expectation = "DTSTART;TZID=PDT:20100510T090000\n"
@@ -117,7 +117,7 @@ describe IceCube, 'to_ical' do
 
   it 'should be able to serialize a schedule with multiple rrules' do
     Time.zone = 'Eastern Time (US & Canada)'
-    schedule = IceCube::Schedule.new(Time.zone.local(2010, 10, 20, 4, 30, 0))
+    schedule = IceCube::RecurrenceSchedule.new(Time.zone.local(2010, 10, 20, 4, 30, 0))
     schedule.add_recurrence_rule IceCube::Rule.weekly.day_of_week(:monday => [2, -1])
     schedule.add_recurrence_rule IceCube::Rule.hourly
     expectation = "DTSTART;TZID=EDT:20101020T043000\n"
@@ -127,7 +127,7 @@ describe IceCube, 'to_ical' do
   end
 
   it 'should be able to serialize a schedule with an rtime' do
-    schedule = IceCube::Schedule.new(Time.utc(2010, 5, 10, 10, 0, 0))
+    schedule = IceCube::RecurrenceSchedule.new(Time.utc(2010, 5, 10, 10, 0, 0))
     schedule.add_recurrence_time Time.utc(2010, 6, 20, 5, 0, 0)
     # test equality
     expectation = "DTSTART:20100510T100000Z\n"
@@ -136,7 +136,7 @@ describe IceCube, 'to_ical' do
   end
 
   it 'should be able to serialize a schedule with an exception time' do
-    schedule = IceCube::Schedule.new(Time.utc(2010, 5, 10, 10, 0, 0))
+    schedule = IceCube::RecurrenceSchedule.new(Time.utc(2010, 5, 10, 10, 0, 0))
     schedule.add_exception_time Time.utc(2010, 6, 20, 5, 0, 0)
     # test equality
     expectation = "DTSTART:20100510T100000Z\n"
@@ -145,48 +145,48 @@ describe IceCube, 'to_ical' do
   end
 
   it 'should be able to serialize a schedule with a duration' do
-    schedule = IceCube::Schedule.new(Time.utc(2010, 5, 10, 10), :duration => 3600)
+    schedule = IceCube::RecurrenceSchedule.new(Time.utc(2010, 5, 10, 10), :duration => 3600)
     expectation = "DTSTART:20100510T100000Z\n"
     expectation << 'DTEND:20100510T110000Z'
     schedule.to_ical.should == expectation
   end
 
   it 'should be able to serialize a schedule with a duration - more odd duration' do
-    schedule = IceCube::Schedule.new(Time.utc(2010, 5, 10, 10), :duration => 3665)
+    schedule = IceCube::RecurrenceSchedule.new(Time.utc(2010, 5, 10, 10), :duration => 3665)
     expectation = "DTSTART:20100510T100000Z\n"
     expectation << 'DTEND:20100510T110105Z'
     schedule.to_ical.should == expectation
   end
 
   it 'should be able to serialize a schedule with an end time' do
-    schedule = IceCube::Schedule.new(Time.utc(2010, 5, 10, 10), :end_time => Time.utc(2010, 5, 10, 20))
+    schedule = IceCube::RecurrenceSchedule.new(Time.utc(2010, 5, 10, 10), :end_time => Time.utc(2010, 5, 10, 20))
     expectation = "DTSTART:20100510T100000Z\n"
     expectation << "DTEND:20100510T200000Z"
     schedule.to_ical.should == expectation
   end
 
   it 'should not modify the duration when running to_ical' do
-    schedule = IceCube::Schedule.new(Time.now, :duration => 3600)
+    schedule = IceCube::RecurrenceSchedule.new(Time.now, :duration => 3600)
     schedule.to_ical
     schedule.duration.should == 3600
   end
 
   it 'should default to to_ical using local time' do
     time = Time.now
-    schedule = IceCube::Schedule.new(Time.now)
+    schedule = IceCube::RecurrenceSchedule.new(Time.now)
     schedule.to_ical.should == "DTSTART;TZID=#{time.zone}:#{time.strftime('%Y%m%dT%H%M%S')}" # default false
   end
 
   it 'should not have an rtime that duplicates start time' do
     start = Time.utc(2012, 12, 12, 12, 0, 0)
-    schedule = IceCube::Schedule.new(start)
+    schedule = IceCube::RecurrenceSchedule.new(start)
     schedule.add_recurrence_time start
     schedule.to_ical.should == "DTSTART:20121212T120000Z"
   end
 
   it 'should be able to receive a to_ical in utc time' do
     time = Time.now
-    schedule = IceCube::Schedule.new(Time.now)
+    schedule = IceCube::RecurrenceSchedule.new(Time.now)
     schedule.to_ical.should == "DTSTART;TZID=#{time.zone}:#{time.strftime('%Y%m%dT%H%M%S')}" # default false
     schedule.to_ical(false).should == "DTSTART;TZID=#{time.zone}:#{time.strftime('%Y%m%dT%H%M%S')}"
     schedule.to_ical(true).should  == "DTSTART:#{time.utc.strftime('%Y%m%dT%H%M%S')}Z"

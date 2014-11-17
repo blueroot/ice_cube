@@ -29,7 +29,7 @@ module IceCube
     context :system_time_zone => 'America/Vancouver' do
 
       it 'should work across DST start hour' do
-        schedule = Schedule.new(t0 = Time.local(2013, 3, 10, 1, 0, 0))
+        schedule = RecurrenceSchedule.new(t0 = Time.local(2013, 3, 10, 1, 0, 0))
         schedule.add_recurrence_rule Rule.hourly
         schedule.first(3).should == [
           Time.local(2013, 3, 10, 1, 0, 0), # -0800
@@ -39,7 +39,7 @@ module IceCube
       end
 
       it 'should not skip times in DST end hour' do
-        schedule = Schedule.new(t0 = Time.local(2013, 11, 3, 0, 0, 0))
+        schedule = RecurrenceSchedule.new(t0 = Time.local(2013, 11, 3, 0, 0, 0))
         schedule.add_recurrence_rule Rule.hourly
         schedule.first(4).should == [
           Time.local(2013, 11, 3, 0, 0, 0),             # -0700
@@ -60,8 +60,8 @@ module IceCube
 
     it 'should produce the correct days for @interval = 3' do
       start_time = DAY
-      schedule = Schedule.new(start_time)
-      schedule = Schedule.from_yaml(schedule.to_yaml)
+      schedule = RecurrenceSchedule.new(start_time)
+      schedule = RecurrenceSchedule.from_yaml(schedule.to_yaml)
       schedule.add_recurrence_rule Rule.hourly(3)
       #check assumption (3) -- (1) 2 (3) 4 (5) 6
       dates = schedule.first(3)
